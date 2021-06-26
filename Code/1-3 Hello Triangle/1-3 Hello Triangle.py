@@ -37,6 +37,10 @@ def main():
     vertices = np.array(vertices, dtype=np.float32)
 
     # 在GPU上创建内存用于储存顶点数据，配置OpenGL如何解释这些内存，并且指定其如何发送给显卡，交给顶点着色器处理
+
+    # 创建并绑定VAO，用于存储后续顶点属性指针的配置
+    VAO = glGenVertexArrays(1)
+    glBindVertexArray(VAO)
     # 通过顶点缓冲对象(Vertex Buffer Objects, VBO)管理内存，它会在GPU内存（通常被称为显存）中储存大量顶点
     VBO = glGenBuffers(1)  # 生成一个VBO对象，指定缓冲ID
     # 把新创建的缓冲绑定到顶点缓冲GL_ARRAY_BUFFER目标上
@@ -85,9 +89,9 @@ def main():
     # glAttachShader(shaderProgram, fragmentShader)
     # glLinkProgram(shaderProgram)
 
-    # 使用封装的 shaders 库
+    # 在此使用封装的 shaders 库
     shaderProgram = compileProgram(compileShader(vertexShaderSource, GL_VERTEX_SHADER),
-                            compileShader(fragmentShaderSource, GL_FRAGMENT_SHADER))
+                                   compileShader(fragmentShaderSource, GL_FRAGMENT_SHADER))
 
     # 用刚创建的程序对象作为它的参数，以激活这个程序对象，每个着色器调用和渲染调用都会使用这个程序对象
     glUseProgram(shaderProgram)
@@ -101,7 +105,7 @@ def main():
     # 我们必须手动指定输入数据的哪一个部分对应顶点着色器的哪一个顶点属性
     # -------------------------------------------------------------------
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3*4, ctypes.c_void_p(0))
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * 4, ctypes.c_void_p(0))
     # 以顶点属性位置值作为参数，启用顶点属性
     glEnableVertexAttribArray(0)
 
@@ -114,6 +118,7 @@ def main():
 
         glfw.swap_buffers(window)  # 交换颜色缓冲
         glfw.poll_events()  # 检查有没有触发什么事件（比如键盘输入、鼠标移动等）、更新窗口状态，并调用对应的回调函数
+        glBindVertexArray(VAO)  # 多个VAO时在此进行绑定切换
         glDrawArrays(GL_TRIANGLES, 0, 3)
 
     # 渲染循环结束后我们需要正确释放/删除之前的分配的所有资源
