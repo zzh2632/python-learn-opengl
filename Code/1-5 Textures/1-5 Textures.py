@@ -66,7 +66,7 @@ def main():
     with open("VertexShader", "rb") as file:
         vertexShaderSource = file.read()
 
-    with open("FragmentShader", "rb") as  file:
+    with open("FragmentShader", "rb") as file:
         fragmentShaderSource = file.read()
 
     # 使用封装的 shaders 库
@@ -94,24 +94,42 @@ def main():
     # -------------------------------------------------------------------
     # 纹理
     # -------------------------------------------------------------------
-    texture = glGenTextures(1)  # 创建1个纹理
-    glBindTexture(GL_TEXTURE_2D, texture)  # 绑定创建的纹理
 
+    # 第一张纹理
+    texture1 = glGenTextures(1)  # 创建1个纹理
+    glBindTexture(GL_TEXTURE_2D, texture1)  # 绑定创建的纹理
     # 为当前绑定的纹理对象设置环绕、过滤方式
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-
     # 加载并生成纹理
-    # image = Image.open("wall.jpg")
-    # image = Image.open("textures/cat.png")
-    image = Image.open("textures/container.jpg")
-    image = image.transpose(Image.FLIP_TOP_BOTTOM)
-    data = image.convert("RGBA").tobytes()
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image.width, image.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data)
+    image1 = Image.open("textures/container.jpg")
+    image1 = image1.transpose(Image.FLIP_TOP_BOTTOM)
+    data1 = image1.convert("RGB").tobytes()
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image1.width, image1.height, 0, GL_RGB, GL_UNSIGNED_BYTE, data1)
     glGenerateMipmap(GL_TEXTURE_2D)
+
+    # 第二张纹理
+    texture2 = glGenTextures(1)  # 创建1个纹理
+    glBindTexture(GL_TEXTURE_2D, texture2)  # 绑定创建的纹理
+    # 为当前绑定的纹理对象设置环绕、过滤方式
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+    # 加载并生成纹理
+    image2 = Image.open("textures/awesomeface.png")
+    image2 = image2.transpose(Image.FLIP_TOP_BOTTOM)
+    data2 = image2.convert("RGBA").tobytes()
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image2.width, image2.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2)
+    glGenerateMipmap(GL_TEXTURE_2D)
+
+    glUseProgram(shaderProgram)
+    # 获取采样器统一变量在着色器中的位置，并为其赋值，指定其相应的纹理单元
+    glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0)
+    glUniform1i(glGetUniformLocation(shaderProgram, "texture2"), 1)
+
 
     # -------------------------------------------------------------------
     # 渲染循环: 让GLFW退出前一直保持运行
@@ -123,11 +141,15 @@ def main():
         # 清除颜色缓冲
         glClearColor(0.2, 0.3, 0.3, 1.0)
         glClear(GL_COLOR_BUFFER_BIT)
+
+        # 激活纹理单元
+        glActiveTexture(GL_TEXTURE0)
+        glBindTexture(GL_TEXTURE_2D, texture1)
+        glActiveTexture(GL_TEXTURE1)
+        glBindTexture(GL_TEXTURE_2D, texture2)
+
         # 激活着色器
         glUseProgram(shaderProgram)
-
-        # 绑定纹理
-        glBindTexture(GL_TEXTURE_2D, texture)
 
         # 绘制
         glBindVertexArray(VAO)
