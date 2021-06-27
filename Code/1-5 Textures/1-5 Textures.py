@@ -123,8 +123,8 @@ def main():
         # 清除颜色缓冲
         glClearColor(0.2, 0.3, 0.3, 1.0)
         glClear(GL_COLOR_BUFFER_BIT)
-        # 记得激活着色器
-        # glUseProgram(shaderProgram)
+        # 激活着色器
+        glUseProgram(shaderProgram)
 
         # 绑定纹理
         glBindTexture(GL_TEXTURE_2D, texture)
@@ -135,11 +135,7 @@ def main():
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, None)
 
         glfw.swap_buffers(window)  # 交换颜色缓冲
-        glfw.poll_events()  # 检查有没有触发什么事件（比如键盘输入、鼠标移动等）、更新窗口状态，并调用对应的回调函数
-
-    # glDeleteVertexArrays(1, VAO)
-    # glDeleteBuffers(1, VBO)
-    # glDeleteBuffers(1, EBO)
+        glfw.poll_events()
 
     # 渲染循环结束后我们需要正确释放/删除之前的分配的所有资源
     glfw.terminate()
