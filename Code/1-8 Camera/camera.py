@@ -30,3 +30,6 @@ class Camera:
         front.y = sin(radians(self.pitch))
         front.z = sin(radians(self.yaw)) * cos(radians(self.pitch))
         self.cameraFront = normalize(front)
+
+    def GetViewMatrix(self):
+        return lookAt(self.cameraPos, self.cameraPos + self.cameraFront, self.cameraUp)
