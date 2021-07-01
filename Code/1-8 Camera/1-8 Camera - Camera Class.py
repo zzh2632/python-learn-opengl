@@ -220,7 +220,8 @@ def main():
         projectionLoc = glGetUniformLocation(shaderProgram, "projection")
         glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection))
         # 坐标变换
-        view = lookAt(camera.cameraPos, camera.cameraPos + camera.cameraFront, camera.cameraUp)
+        # view = lookAt(camera.cameraPos, camera.cameraPos + camera.cameraFront, camera.cameraUp)
+        view = camera.GetViewMatrix()
         viewLoc = glGetUniformLocation(shaderProgram, "view")
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view))
 
