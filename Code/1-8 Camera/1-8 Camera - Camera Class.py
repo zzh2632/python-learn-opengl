@@ -265,18 +265,11 @@ def mouse_callback(window, xpos, ypos):
     camera.ProcessMouseMovement(xoffset, yoffset)
 
 
-
-
-
-
-
-
 def scroll_callback(window, xoffset, yoffset):
-    global fov
-    fov -= yoffset
-    if fov < 1.0:
+    camera.fov -= yoffset
+    if camera.fov < 1.0:
         fov = 1.0
-    if fov > 45.0:
+    if camera.fov > 45.0:
         fov = 45.0
 
 
