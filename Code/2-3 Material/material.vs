@@ -13,6 +13,6 @@ void main()
 {
     // 获取世界空间下的片段位置
     FragPos = vec3(model * vec4(aPos, 1.0));
-    Normal = aNormal;
+    Normal = mat3(transpose(inverse(model))) * aNormal;
     gl_Position = projection * view * model * vec4(aPos, 1.0);
 }
