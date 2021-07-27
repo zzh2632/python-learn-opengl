@@ -5,6 +5,7 @@ import numpy as np
 from PIL import Image
 from glm import *
 from camera import Camera
+from TextureLoader import load_texture
 
 SCR_WIDTH = 800
 SCR_HEIGHT = 600
@@ -53,7 +54,7 @@ def main():
     # -------------------------------------------------------------------
 
     # 定义顶点数据
-    vertices = [
+    cubeVertices = [
         -0.5, -0.5, -0.5, 0.0, 0.0,
         0.5, -0.5, -0.5, 1.0, 0.0,
         0.5, 0.5, -0.5, 1.0, 1.0,
@@ -96,29 +97,41 @@ def main():
         -0.5, 0.5, 0.5, 0.0, 0.0,
         -0.5, 0.5, -0.5, 0.0, 1.0
     ]
-    vertices = np.array(vertices, dtype=np.float32)
+    cubeVertices = np.array(cubeVertices, dtype=np.float32)
 
-    cubePositions = [
-        vec3(0.0, 0.0, 0.0),
-        vec3(2.0, 5.0, -15.0),
-        vec3(-1.5, -2.2, -2.5),
-        vec3(-3.8, -2.0, -12.3),
-        vec3(2.4, -0.4, -3.5),
-        vec3(-1.7, 3.0, -7.5),
-        vec3(1.3, -2.0, -2.5),
-        vec3(1.5, 2.0, -2.5),
-        vec3(1.5, 0.2, -1.5),
-        vec3(-1.3, 1.0, -1.5)
+    planeVertices = [
+        5.0, -0.5, 5.0, 2.0, 0.0,
+        -5.0, -0.5, 5.0, 0.0, 0.0,
+        -5.0, -0.5, -5.0, 0.0, 2.0,
+        5.0, -0.5, 5.0, 2.0, 0.0,
+        -5.0, -0.5, -5.0, 0.0, 2.0,
+        5.0, -0.5, -5.0, 2.0, 2.0
     ]
+    planeVertices = np.array(planeVertices, dtype=np.float32)
+
 
     # 在GPU上创建内存用于储存顶点数据，配置OpenGL如何解释这些内存，并且指定其如何发送给显卡，交给顶点着色器处理
-    VAO = glGenVertexArrays(1)
-    VBO = glGenBuffers(1)
+    cubeVAO = glGenVertexArrays(1)
+    cubeVBO = glGenBuffers(1)
+    glBindVertexArray(cubeVAO)
+    glBindBuffer(GL_ARRAY_BUFFER, cubeVBO)
+    glBufferData(GL_ARRAY_BUFFER, cubeVertices.nbytes, cubeVertices, GL_STATIC_DRAW)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(0))
+    glEnableVertexAttribArray(0)
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(3 * 4))
+    glEnableVertexAttribArray(1)
+    glBindVertexArray(0)
 
-    glBindVertexArray(VAO)
-
-    glBindBuffer(GL_ARRAY_BUFFER, VBO)
-    glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
+    planeVAO = glGenVertexArrays(1)
+    planeVBO = glGenBuffers(1)
+    glBindVertexArray(planeVAO)
+    glBindBuffer(GL_ARRAY_BUFFER, planeVBO)
+    glBufferData(GL_ARRAY_BUFFER, planeVertices.nbytes, planeVertices, GL_STATIC_DRAW)
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(0))
+    glEnableVertexAttribArray(0)
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(3 * 4))
+    glEnableVertexAttribArray(1)
+    glBindVertexArray(0)
 
     # -------------------------------------------------------------------
     # 已经把顶点数据储存在显卡的内存中，用VBO这个顶点缓冲对象管理
@@ -138,56 +151,17 @@ def main():
     # 用刚创建的程序对象作为它的参数，以激活这个程序对象，每个着色器调用和渲染调用都会使用这个程序对象
     glUseProgram(shaderProgram)
 
-    # -------------------------------------------------------------------
-    # 链接顶点属性
-    # 我们必须手动指定输入数据的哪一个部分对应顶点着色器的哪一个顶点属性
-    # GL_FLOAT长度为4字节
-    # -------------------------------------------------------------------
-    # position attribute
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(0))
-    glEnableVertexAttribArray(0)
-    # texturecoord attribute
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * 4, ctypes.c_void_p(3 * 4))
-    glEnableVertexAttribArray(1)
 
     # -------------------------------------------------------------------
     # 纹理
     # -------------------------------------------------------------------
 
-    # 第一张纹理
-    texture1 = glGenTextures(1)  # 创建1个纹理
-    glBindTexture(GL_TEXTURE_2D, texture1)  # 绑定创建的纹理
-    # 为当前绑定的纹理对象设置环绕、过滤方式
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-    # 加载并生成纹理
-    image1 = Image.open("textures/container.jpg")
-    image1 = image1.transpose(Image.FLIP_TOP_BOTTOM)
-    data1 = image1.convert("RGB").tobytes()
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image1.width, image1.height, 0, GL_RGB, GL_UNSIGNED_BYTE, data1)
-    glGenerateMipmap(GL_TEXTURE_2D)
-
-    # 第二张纹理
-    texture2 = glGenTextures(1)  # 创建1个纹理
-    glBindTexture(GL_TEXTURE_2D, texture2)  # 绑定创建的纹理
-    # 为当前绑定的纹理对象设置环绕、过滤方式
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
-    # 加载并生成纹理
-    image2 = Image.open("textures/awesomeface.png")
-    image2 = image2.transpose(Image.FLIP_TOP_BOTTOM)
-    data2 = image2.convert("RGBA").tobytes()
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, image2.width, image2.height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data2)
-    glGenerateMipmap(GL_TEXTURE_2D)
+    cubeTexture = load_texture("textures/container.jpg")
+    floorTexture = load_texture("textures/awesomeface.png")
 
     glUseProgram(shaderProgram)
     # 获取采样器统一变量在着色器中的位置，并为其赋值，指定其相应的纹理单元
     glUniform1i(glGetUniformLocation(shaderProgram, "texture1"), 0)
-    glUniform1i(glGetUniformLocation(shaderProgram, "texture2"), 1)
 
     # -------------------------------------------------------------------
     # 渲染循环: 让GLFW退出前一直保持运行
@@ -208,32 +182,43 @@ def main():
 
         # 激活纹理单元
         glActiveTexture(GL_TEXTURE0)
-        glBindTexture(GL_TEXTURE_2D, texture1)
+        glBindTexture(GL_TEXTURE_2D, cubeTexture)
         glActiveTexture(GL_TEXTURE1)
-        glBindTexture(GL_TEXTURE_2D, texture2)
+        glBindTexture(GL_TEXTURE_2D, floorTexture)
 
         # 激活着色器
         glUseProgram(shaderProgram)
 
-        # Projection Matrix
-        projection = perspective(radians(camera.fov), SCR_WIDTH / SCR_HEIGHT, 1.0, 100.0)
-        projectionLoc = glGetUniformLocation(shaderProgram, "projection")
-        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection))
-        # 坐标变换
-        # view = lookAt(camera.cameraPos, camera.cameraPos + camera.cameraFront, camera.cameraUp)
         view = camera.GetViewMatrix()
         viewLoc = glGetUniformLocation(shaderProgram, "view")
+        projection = perspective(radians(camera.fov), SCR_WIDTH / SCR_HEIGHT, 1.0, 100.0)
+        projectionLoc = glGetUniformLocation(shaderProgram, "projection")
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view))
+        glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, value_ptr(projection))
 
-        glBindVertexArray(VAO)
-        for i in range(10):
-            model = mat4(1.0)
-            model = translate(model, cubePositions[i])
-            angle = 20.0 * i
-            model = rotate(model, glfw.get_time() * radians(angle), vec3(1.0, 0.3, 0.5))
-            modelLoc = glGetUniformLocation(shaderProgram, "model")
-            glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model))
-            glDrawArrays(GL_TRIANGLES, 0, 36)
+        modelLoc = glGetUniformLocation(shaderProgram, "model")
+
+
+        # cubes
+        # model = mat4(1.0)
+        # glBindVertexArray(cubeVAO)
+        # glActiveTexture(GL_TEXTURE0)
+        # glBindTexture(GL_TEXTURE_2D, cubeTexture)
+        # model = translate(model, vec3(-1.0, 0.0, -1.0))
+        # glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model))
+        # glDrawArrays(GL_TRIANGLES, 0, 36)
+        #
+        # model = mat4(1.0)
+        # model = translate(model, vec3(2.0, 0.0, 0.0))
+        # glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(model))
+        # glDrawArrays(GL_TRIANGLES, 0, 36)
+
+        # floor
+        glBindVertexArray(planeVAO)
+        glBindTexture(GL_TEXTURE_2D, floorTexture)
+        glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(mat4(1.0)))
+        glDrawArrays(GL_TRIANGLES, 0, 6)
+        glBindVertexArray(0)
 
         glfw.swap_buffers(window)  # 交换颜色缓冲
         glfw.poll_events()
