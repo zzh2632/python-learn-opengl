@@ -14,3 +14,4 @@ def load_texture(path):
     data = image.convert("RGB").tobytes()
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.width, image.height, 0, GL_RGB, GL_UNSIGNED_BYTE, data)
     glGenerateMipmap(GL_TEXTURE_2D)
+    return texture
